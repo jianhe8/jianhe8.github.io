@@ -91,7 +91,9 @@ python tools/kejie.py del-video "王中之王2" --all
 
 # 倒计时
 python tools/kejie.py list-countdown
-python tools/kejie.py add-countdown "棋仙战 · 预选" 2026-11-02 --note "第 2 届世界围棋棋仙战 预选"
+python tools/kejie.py add-countdown "棋仙战 · 预选" 2026-11-02 --note "第 2 届世界围棋棋仙战 综合预选 · 对江维杰"
+
+开赛日当天显示「今天」，过了那天页面自己把它摘掉，不用手动删；全部过期时整行隐藏。
 
 # 一言（首页随机语录）
 python tools/kejie.py list-quotes
