@@ -16,7 +16,7 @@
   * 对手志       -> 页面运行时由对局实时聚合，加完对局自动更新，无需额外处理
   * 派生计数     -> 每次写操作都会自动 recount，bili_total 不会和实际条数脱节
 
-每次写入前自动备份为 index.backup.<时间戳>.html，可随时回滚。
+写入不再自动备份（用户改用 GitHub 历史回滚）；如需本地备份可临时改 save() 的 backup 参数。
 
 用法示例（「某杯」「某九段」「BV1xxxxxxxxx」都是占位，日期一律取已发生的；
 只有倒计时那条用未来日期）：
@@ -384,7 +384,7 @@ def cmd_add_tour(a):
     print("  tier 依据：%s" % why)
     print("  当前序号：%d" % doc.tours.index(t))
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-tour")
+    doc.save(dry=a.dry_run, backup=False, note="add-tour")
 
 
 def cmd_add_game(a):
@@ -435,7 +435,7 @@ def cmd_add_game(a):
         warn("未提供 --result-text（如「黑中盘胜」），对局明细会空着这一列")
     sync_group_sub(doc, t)
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-game")
+    doc.save(dry=a.dry_run, backup=False, note="add-game")
 
 
 def cmd_del_game(a):
@@ -486,7 +486,7 @@ def cmd_del_game(a):
     if dropped_ids:
         print("  顺带清掉 %d 条棋谱映射（id: %s）" % (len(dropped_ids), ", ".join(map(str, dropped_ids))))
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="del-game")
+    doc.save(dry=a.dry_run, backup=False, note="del-game")
 
 
 def cmd_set_game_result(a):
@@ -507,7 +507,7 @@ def cmd_set_game_result(a):
     old = g.get("result")
     g["result"] = a.result
     ok("%s 对 %s：%s -> %s" % (g["date"], g["opp"], old or "(空)", a.result))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="set-game-result")
+    doc.save(dry=a.dry_run, backup=False, note="set-game-result")
 
 
 def cmd_set_result(a):
@@ -519,7 +519,7 @@ def cmd_set_result(a):
         t["end"] = parse_date(a.end).isoformat()
     sync_group_sub(doc, t)
     ok("%s\n  结果：%s -> %s" % (t["name"], old, a.result))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="set-result")
+    doc.save(dry=a.dry_run, backup=False, note="set-result")
 
 
 BV_RE = re.compile(r"/video/(BV[0-9A-Za-z]{10})")
@@ -561,7 +561,7 @@ def cmd_set_group(a):
     if a.tier is not None:
         g["tier"] = a.tier
     ok("分组已更新：%s | %s" % (g["name"], g.get("sub", "")))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="set-group")
+    doc.save(dry=a.dry_run, backup=False, note="set-group")
 
 
 def cmd_merge_groups(a):
@@ -586,7 +586,7 @@ def cmd_merge_groups(a):
     ok("合并「%s」-> 「%s」：移入 %d 个，去重跳过 %d 个" % (src["name"], dst["name"], moved, skipped))
     print("  源分组已删除；目标现有 %d 个视频" % len(dst["items"]))
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="merge-groups")
+    doc.save(dry=a.dry_run, backup=False, note="merge-groups")
 
 
 def cmd_add_video(a):
@@ -655,7 +655,7 @@ def cmd_add_video(a):
         found.setdefault("bili", []).append(item)
         ok("已挂到对局 %s 对 %s（%s）" % (dstr, opp, t0["name"]))
         recount(doc.D)
-        doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-video")
+        doc.save(dry=a.dry_run, backup=False, note="add-video")
         return
 
     # 目标二：某赛事的分组
@@ -675,7 +675,7 @@ def cmd_add_video(a):
         g["items"].sort(key=lambda x: x.get("date", ""))
         ok("已加入分组「%s」（现 %d 个）" % (g["name"], len(g["items"])))
         recount(doc.D)
-        doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-video")
+        doc.save(dry=a.dry_run, backup=False, note="add-video")
         return
 
     # 目标三：--net 或 --group
@@ -698,7 +698,7 @@ def cmd_add_video(a):
     g["items"].sort(key=lambda x: x.get("date", ""))
     ok("已加入分组「%s」（现 %d 个）" % (g["name"], len(g["items"])))
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-video")
+    doc.save(dry=a.dry_run, backup=False, note="add-video")
 
 
 def cmd_del_video(a):
@@ -733,7 +733,7 @@ def cmd_del_video(a):
         print("  - %s ｜ %s ｜ %s" % (bvid_of(it) or "?", (it.get("title") or "")[:40], where))
     ok("已删除 %d 条视频" % len(hits))
     recount(doc.D)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="del-video")
+    doc.save(dry=a.dry_run, backup=False, note="del-video")
 
 
 def sync_group_sub(doc, t):
@@ -769,12 +769,12 @@ def cmd_add_countdown(a):
             c["date"] = d.isoformat()
             c["note"] = a.note or c.get("note", "")
             ok("已更新倒计时：%s -> %s" % (a.name, d.isoformat()))
-            doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-countdown")
+            doc.save(dry=a.dry_run, backup=False, note="add-countdown")
             return
     cds.append({"name": a.name, "date": d.isoformat(), "note": a.note or ""})
     cds.sort(key=lambda c: c["date"])
     ok("已新增倒计时：%s  %s" % (a.name, d.isoformat()))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-countdown")
+    doc.save(dry=a.dry_run, backup=False, note="add-countdown")
 
 
 def cmd_del_countdown(a):
@@ -785,7 +785,7 @@ def cmd_del_countdown(a):
         die("没有名为 %r 的倒计时" % a.name)
     doc.D["countdowns"] = keep
     ok("已删除倒计时：%s" % a.name)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="del-countdown")
+    doc.save(dry=a.dry_run, backup=False, note="del-countdown")
 
 
 # ---------------------------------------------------------------- 校验
@@ -861,7 +861,7 @@ def cmd_add_sgf(a):
     print("  棋谱库 %d 局，压缩后 base64 %.0f KB" % (len(db), size / 1024))
     if old is not None and str(old) != gid:
         print("  原登记 id=%s 已被替换" % old)
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-sgf")
+    doc.save(dry=a.dry_run, backup=False, note="add-sgf")
 
 
 def cmd_list_quotes(a):
@@ -891,7 +891,7 @@ def cmd_add_quote(a):
     if a.sort:
         qs.sort(key=lambda x: x.get("s", ""))
     ok("已加入一言（现 %d 条）：%s" % (len(qs), t[:44]))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="add-quote")
+    doc.save(dry=a.dry_run, backup=False, note="add-quote")
 
 
 def cmd_del_quote(a):
@@ -917,7 +917,7 @@ def cmd_del_quote(a):
         removed = hits[0]
         qs.remove(removed)
     ok("已删除一言（剩 %d 条）：%s" % (len(qs), removed.get("t", "")[:44]))
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="del-quote")
+    doc.save(dry=a.dry_run, backup=False, note="del-quote")
 
 
 def cmd_validate(a):
@@ -1050,7 +1050,7 @@ def cmd_sync(a):
         vs["games"] = sum(len(t.get("games", [])) for t in doc.tours)
     ok("同步完成：重算 %d 项赛事战绩，bili_total=%d，verify_summary 计数已对齐" % (n, total_items))
     warn("verify_summary 里的 checks/passed/failed 是历史校验结果，新增对局后建议重跑校验脚本")
-    doc.save(dry=a.dry_run, backup=not a.no_backup, note="sync")
+    doc.save(dry=a.dry_run, backup=False, note="sync")
 
 
 # ---------------------------------------------------------------- CLI
