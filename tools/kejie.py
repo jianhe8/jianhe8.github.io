@@ -436,6 +436,7 @@ def cmd_add_game(a):
     sync_group_sub(doc, t)
     recount(doc.D)
     doc.save(dry=a.dry_run, backup=False, note="add-game")
+    print("  提示：README / HANDOFF 里的数字未同步，发布前跑 `python tools/kejie.py sync --docs`")
 
 
 def cmd_del_game(a):
@@ -1031,6 +1032,105 @@ def cmd_validate(a):
     sys.exit(1 if errs else 0)
 
 
+# ---------------------------------------------------------------- 文档同步
+# README / HANDOFF 里的数字是人写的，index.html 改了它们不会自己变。
+# sync --docs 按下面这批正则把它们重算一遍；口径与页面里的「派生量」块保持一致。
+
+README_PATH = os.path.join(ROOT, "README.md")
+HANDOFF_PATH = os.path.join(ROOT, "HANDOFF.md")
+
+
+def site_facts(doc):
+    """页面顶部 / 文档里用到的派生数字。"""
+    T = doc.tours
+    w = sum(t.get("wins", 0) for t in T)
+    l = sum(t.get("losses", 0) for t in T)
+    v = sum(t.get("voids", 0) for t in T)
+    world = [t for t in T if t.get("tier") == "世界大赛"]
+    wchamp = sum(1 for t in world if t.get("result") == "冠军")
+    facts = {
+        "tours": len(T),
+        "games": w + l + v,
+        "wins": w, "losses": l, "voids": v,
+        "first": min((t.get("start") or "9999-99-99") for t in T) if T else "",
+        "last": max((t.get("end") or "") for t in T) if T else "",
+        "world": len(world),
+        # 8 冠时统一写 8(9)（第 9 冠争议未决），与页面 CHAMP_TXT 同口径
+        "champ": "8(9)" if wchamp == 8 else str(wchamp),
+        "dom": sum(1 for t in T if t.get("tier") == "国内头衔战" and t.get("result") == "冠军"),
+        "team": sum(1 for t in T if t.get("tier") == "世界团体赛"),
+        "scored": sum(1 for t in T if t.get("awards") or t.get("cost")),
+        "groups": len(doc.groups),
+        "videos": sum(len(g.get("items", [])) for g in doc.groups),
+        "sgf": None,
+    }
+    m = SGFZ_RE.search(doc.text)
+    if m:
+        try:
+            db = json.loads(gzip.decompress(base64.b64decode(m.group(1))).decode("utf-8"))
+            facts["sgf"] = len(db)
+        except Exception:
+            facts["sgf"] = None
+    return facts
+
+
+def _patch_doc(path, pairs, dry=False):
+    """逐条正则替换；一条都没命中就提示（说明文档格式被改过，别静默跳过）。"""
+    name = os.path.basename(path)
+    if not os.path.exists(path):
+        warn("找不到 %s，跳过" % name)
+        return 0
+    with open(path, encoding="utf-8") as f:
+        txt = orig = f.read()
+    n = 0
+    for pat, rep in pairs:
+        new, k = re.subn(pat, lambda m, r=rep: r, txt)
+        if k == 0:
+            warn("%s：没匹配到 %s，跳过（格式被改过？）" % (name, pat))
+        else:
+            txt, n = new, n + k
+    if txt == orig:
+        print("  %s：已是当前值" % name)
+        return 0
+    if dry:
+        warn("dry-run：%s 需要更新 %d 处，未写入" % (name, n))
+        return n
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(txt)
+    ok("%s：更新 %d 处" % (name, n))
+    return n
+
+
+def sync_docs(doc, dry=False):
+    f = site_facts(doc)
+    void_txt = (" %d 无胜负" % f["voids"]) if f["voids"] else ""
+    void_short = ("%d无" % f["voids"]) if f["voids"] else ""
+    sgf = f["sgf"] if f["sgf"] is not None else "?"
+
+    readme = [
+        (r"\d{4}-\d{2}-\d{2} 到 \d{4}-\d{2}-\d{2} 的 \d+ 项赛事、\d+ 局正式对局"
+         r"（\d+ 胜 \d+ 负(?: \d+ 无胜负)?）",
+         "%s 到 %s 的 %d 项赛事、%d 局正式对局（%d 胜 %d 负%s）"
+         % (f["first"], f["last"], f["tours"], f["games"], f["wins"], f["losses"], void_txt)),
+        (r"\| [0-9()]+ 个世界冠军卡片", "| %s 个世界冠军卡片" % f["champ"]),
+        (r"下面是 \d+ 项赛事，逐局记录", "下面是 %d 项赛事，逐局记录" % f["tours"]),
+        (r"现 \d+ 局", "现 %d 局" % f["games"]),
+    ]
+    handoff = [
+        (r"最后更新：\d{4}-\d{2}-\d{2}", "最后更新：%s" % today_str()),
+        (r"当前数据：.*?SGF 库 \d+ 局。",
+         "当前数据：%d 赛事 / %d 局（%d胜%d负%s） / %d 视频 / %d 组 / SGF 库 %s 局。"
+         % (f["tours"], f["games"], f["wins"], f["losses"], void_short,
+            f["videos"], f["groups"], sgf)),
+        (r"世界大赛冠军 [0-9()]+、国内头衔战冠军 \d+、世界大赛出场 \d+ 项、"
+         r"农心杯 \d+ 次、计分赛事 \d+ 项、生涯首局 \d{4}-\d{2}-\d{2}",
+         "世界大赛冠军 %s、国内头衔战冠军 %d、世界大赛出场 %d 项、农心杯 %d 次、"
+         "计分赛事 %d 项、生涯首局 %s"
+         % (f["champ"], f["dom"], f["world"], f["team"], f["scored"], f["first"])),
+    ]
+    return _patch_doc(README_PATH, readme, dry) + _patch_doc(HANDOFF_PATH, handoff, dry)
+
+
 def cmd_sync(a):
     doc = Doc(a.html)
     n = 0
@@ -1051,6 +1151,10 @@ def cmd_sync(a):
     ok("同步完成：重算 %d 项赛事战绩，bili_total=%d，verify_summary 计数已对齐" % (n, total_items))
     warn("verify_summary 里的 checks/passed/failed 是历史校验结果，新增对局后建议重跑校验脚本")
     doc.save(dry=a.dry_run, backup=False, note="sync")
+    if getattr(a, "docs", False):
+        sync_docs(doc, dry=a.dry_run)
+    else:
+        print("  提示：加 --docs 可顺手把 README / HANDOFF 里的数字一起刷新")
 
 
 # ---------------------------------------------------------------- CLI
@@ -1215,6 +1319,8 @@ def build_parser():
 
     sp = sub.add_parser("sync", help="重算战绩、排序、对齐分组说明与计数")
     add_common(sp)
+    sp.add_argument("--docs", action="store_true",
+                    help="同时刷新 README / HANDOFF 里的数字（赛事数、局数、KPI、SGF 数等）")
     sp.set_defaults(func=cmd_sync)
 
     return p

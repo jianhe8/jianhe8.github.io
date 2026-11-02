@@ -660,8 +660,8 @@ a.pblk:hover{border-color:var(--goldline2);color:var(--blue);text-decoration:non
         <div class="tb-top"><span class="tb-line"></span><span class="tb-eyebrow">围棋档案 · GO ARCHIVE</span></div>
         <h1><span class="tick"></span><span class="nm">柯洁</span></h1>
         <div class="tb-bottom">
-          <span class="tb-sub">围棋九段 · 8(9) 冠</span>
-          <span class="tb-meta">2008 — 2026</span>
+          <span class="tb-sub">围棋九段 · <span id="tbChamp">—</span> 冠</span>
+          <span class="tb-meta"><span id="tbYears">—</span></span>
         </div>
         <div class="tb-lede">
           <p>柯洁，1997 年生于浙江丽水，中国围棋九段。2015 年 1 月，17 岁的他在第 2 届百灵杯决赛中击败邱峻，拿下首个世界冠军，是当时中国最年轻的世界冠军；此后五年在百灵杯、三星杯、梦百合杯、新奥杯之间连下八城——<b>三星杯四冠</b>、<b>百灵杯两冠</b>，梦百合杯与新奥杯各一冠——并创下<b>世界最年轻 3、4、5、6、7 冠王</b>、<b>中国最年轻 3、4、5、6、7、8、(9) 冠王</b>的纪录。2015 年起长期占据世界排名第一，被视为 AlphaGo 出现之前人类棋坛的最后一道防线。</p>
@@ -745,7 +745,7 @@ a.pblk:hover{border-color:var(--goldline2);color:var(--blue);text-decoration:non
 
 <!-- ============ 时间线 ============ -->
 <section class="panel on" id="p-tl">
-  <div class="sect-h"><h2>8(9) 个世界冠军</h2><span class="sub">按夺冠时间排序 · 决赛比分与对手 · 第 9 冠（第 29 届 LG 杯）因争议判负、中方不承认，未计入</span></div>
+  <div class="sect-h"><h2><span id="champHead">—</span> 个世界冠军</h2><span class="sub">按夺冠时间排序 · 决赛比分与对手 · 第 9 冠（第 29 届 LG 杯）因争议判负、中方不承认，未计入</span></div>
   <div class="champs" id="champs"></div>
 
   <div class="kpi six" id="tlkpi"></div>
@@ -815,7 +815,7 @@ a.pblk:hover{border-color:var(--goldline2);color:var(--blue);text-decoration:non
   <div class="vsum" id="vsum"></div>
   <div class="rule">
     <h3>校验方法</h3>
-    <div class="note">对 257 项赛事逐条比对，全部按本页「规则与校准」所列的 2012 版条例取值，不采信任何「看起来差不多」的数字。每条赛事检查：日期区间、胜负统计、名次判定（按最后一局重算）、赋分明目与分值、衰减类别、名目与赛事是否匹配、该给的分有没有漏给、参赛扣分是否符合本赛规模、对局字段完整性、重复对局。</div>
+    <div class="note">对 <span id="vTours">—</span> 项赛事逐条比对，全部按本页「规则与校准」所列的 2012 版条例取值，不采信任何「看起来差不多」的数字。每条赛事检查：日期区间、胜负统计、名次判定（按最后一局重算）、赋分明目与分值、衰减类别、名目与赛事是否匹配、该给的分有没有漏给、参赛扣分是否符合本赛规模、对局字段完整性、重复对局。</div>
     <h4>另外对积分引擎做了 8 项自检</h4>
     <div id="vengine"></div>
   </div>
@@ -1004,7 +1004,7 @@ a.pblk:hover{border-color:var(--goldline2);color:var(--blue);text-decoration:non
 
 </main>
 <footer class="wrap">
-  <b>数据来源</b>：弘通围棋对局库（抓取 1150 条，剔除 23 条重复 / 残缺记录，得 1127 局，2008-07-10 ~ 2026-07-30）、新浪体育 / 体坛周报（马晓春积分制历年报道）、@晚春 微博与《围棋爱柯洁》披露的 2012 版条例及 2026 年实战积分榜、B 站「明玥谈棋」。<br>
+  <b>数据来源</b>：弘通围棋对局库（抓取 1150 条，剔除 23 条重复 / 残缺记录，得 1127 局；后续补录至 <span id="srcGames">—</span> 局，覆盖 <span id="srcSpan">—</span>）、新浪体育 / 体坛周报（马晓春积分制历年报道）、@晚春 微博与《围棋爱柯洁》披露的 2012 版条例及 2026 年实战积分榜、B 站「明玥谈棋」。<br>
   <b>口径差异</b>：另有统计作「1241 局（848 胜 392 负 1 和）」，比弘通口径多约 110 局。差额主要来自弘通未收录的对局——网络对局（野狐等）、让子 / 指导棋、双人赛与部分不计等级分的邀请赛。本档案只收「能核到棋谱与轮次」的正式对局，因此不并入这部分；弘通站点（hotongo.com）已于 2026 年下线，暂时无法回补。<br>
   <b>链接</b>：明玥谈棋视频取其全部投稿中标题含「柯洁」的 200 个（已剔除仅提及柯洁、实为他人对局的 12 个），赛事与轮次按封面顶部条、抽帧终局手数逐条核对；野狐等线上对局并入一组。<br>
   <b>声明</b>：马氏积分为重建模型。官方从未公布修订后的完整细则，赋分与扣分口径按公开条例与实例推定，仅供研究参考。
@@ -1202,6 +1202,25 @@ const worldChamp = TOURS.filter(t=>t.result==='冠军'&&t.tier==='世界大赛')
 const CHAMP_TXT = worldChamp === 8 ? '8(9)' : String(worldChamp);
 const domTitles  = TOURS.filter(t=>t.result==='冠军'&&t.tier==='国内头衔战').length;
 const scored = TOURS.filter(t=>t.awards.length||t.cost).length;
+/* ---------- 派生量：一律从 D 实时算，加对局 / 加赛事后自动跟随 ----------
+   约定：页面里任何数字、年份、冠军数都不许写死，全从下面取 */
+const FIRST_DAY = TOURS.reduce((m,t)=> (t.start && t.start < m ? t.start : m), '2008-07-10');
+const LAST_DAY  = TOURS.reduce((m,t)=> (t.end   && t.end   > m ? t.end   : m), FIRST_DAY);
+const todayISO  = (()=>{ const n = new Date(); return new Date(n.getTime() - n.getTimezoneOffset()*6e4).toISOString().slice(0,10); })();
+const CURVE_END = LAST_DAY > todayISO ? LAST_DAY : todayISO;
+/* 生涯首局取全局最早的一局，不能靠 TOURS[0]（赛事顺序改过就会错） */
+const FIRST_GAME = TOURS.reduce((best, t) => (t.games || []).reduce(
+  (b, g) => (!b || g.date < b.date ? g : b), best), null);
+
+$('tbChamp').textContent   = CHAMP_TXT;
+$('tbYears').textContent   = FIRST_DAY.slice(0,4) + ' — ' + LAST_DAY.slice(0,4);
+$('champHead').textContent = CHAMP_TXT;
+$('vTours').textContent    = TOURS.length;
+$('srcGames').textContent  = totalG;
+$('srcSpan').textContent   = FIRST_DAY + ' ~ ' + LAST_DAY;
+$('qdate').min = FIRST_DAY;
+$('qdate').max = CURVE_END;
+
 $('headstats').innerHTML = [
   ['生涯对局', totalG, '局'],
   ['战绩', totalW+'–'+totalL, ''],
@@ -1451,14 +1470,14 @@ $('tlkpi').innerHTML = [
   ['国内大赛冠军', TOURS.filter(t=>t.tier==='国内头衔战'&&/冠军/.test(t.result)).length+' 冠'],
   ['农心杯出场', TOURS.filter(t=>t.tier==='世界团体赛').length+' 次'],
   ['计分赛事', scored+' 项'],
-  ['生涯首局', fmt(TOURS[0].start)+' · 一力辽'],
+  ['生涯首局', FIRST_GAME ? fmt(FIRST_GAME.date)+' · '+esc(FIRST_GAME.opp) : '—'],
 ].map(([k,v])=>`<div class="box"><div class="k">${k}</div><div class="v" style="font-size:15px">${v}</div></div>`).join('');
 
 /* ---------- 曲线 ---------- */
 const cv = $('chart'), ctx = cv.getContext('2d');
 const CH = 400, PAD = {l:54,r:18,t:18,b:36};
 let CW=0, series=[], ymin=0, ymax=0;
-const D0 = dnum('2008-07-10'), D1 = dnum('2026-08-31');
+const D0 = dnum(FIRST_DAY), D1 = dnum(CURVE_END);
 function buildSeries(){
   series = [];
   for (let d=D0; d<=D1; d++){
@@ -1563,8 +1582,8 @@ $('curvekpi').innerHTML = (()=>{
   const peak = series.reduce((a,b)=>b[1]>a[1]?b:a);
   const peakDay = new Date(peak[0]*86400000).toISOString().slice(0,10);
   return [['历史峰值', peak[1]+' 分'], ['峰值日期', fmt(peakDay)],
-          ['当前（'+fmt('2026-07-30')+'）', balance('2026-07-30')+' 分'],
-          ['出现过负值', '0 天']]
+          ['当前（'+fmt(LAST_DAY)+'）', balance(LAST_DAY)+' 分'],
+          ['出现过负值', series.filter(s=>s[1]<0).length+' 天']]
     .map(([k,v])=>`<div class="box"><div class="k">${k}</div><div class="v" style="font-size:15px">${v}</div></div>`).join('');
 })();
 
