@@ -1207,7 +1207,11 @@ const scored = TOURS.filter(t=>t.awards.length||t.cost).length;
 const FIRST_DAY = TOURS.reduce((m,t)=> (t.start && t.start < m ? t.start : m), '2008-07-10');
 const LAST_DAY  = TOURS.reduce((m,t)=> (t.end   && t.end   > m ? t.end   : m), FIRST_DAY);
 const todayISO  = (()=>{ const n = new Date(); return new Date(n.getTime() - n.getTimezoneOffset()*6e4).toISOString().slice(0,10); })();
+/* 曲线终点 = 今天（若数据比今天还新，则用数据末日）。
+   不写死日期：页面每过一天自动往后推一天，明天打开就画到明天。
+   「当前」那一格也跟这一天走，别用 LAST_DAY，否则标签会永远停在最后一条数据那天。 */
 const CURVE_END = LAST_DAY > todayISO ? LAST_DAY : todayISO;
+const CUR_DAY   = CURVE_END;
 /* 生涯首局取全局最早的一局，不能靠 TOURS[0]（赛事顺序改过就会错） */
 const FIRST_GAME = TOURS.reduce((best, t) => (t.games || []).reduce(
   (b, g) => (!b || g.date < b.date ? g : b), best), null);
@@ -1582,7 +1586,7 @@ $('curvekpi').innerHTML = (()=>{
   const peak = series.reduce((a,b)=>b[1]>a[1]?b:a);
   const peakDay = new Date(peak[0]*86400000).toISOString().slice(0,10);
   return [['历史峰值', peak[1]+' 分'], ['峰值日期', fmt(peakDay)],
-          ['当前（'+fmt(LAST_DAY)+'）', balance(LAST_DAY)+' 分'],
+          ['当前（'+fmt(CUR_DAY)+'）', balance(CUR_DAY)+' 分'],
           ['出现过负值', series.filter(s=>s[1]<0).length+' 天']]
     .map(([k,v])=>`<div class="box"><div class="k">${k}</div><div class="v" style="font-size:15px">${v}</div></div>`).join('');
 })();
