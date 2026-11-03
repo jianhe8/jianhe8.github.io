@@ -635,6 +635,8 @@ def cmd_add_video(a):
     }
     if not a.title:
         warn("未提供 --title，标题会显示成 BV 号")
+    if getattr(a, "season", ""):
+        item["season"] = a.season
 
     # 目标一：某局的 bili 数组
     if a.game:
@@ -1260,6 +1262,7 @@ def build_parser():
     sp.add_argument("--date", default="")
     sp.add_argument("--kind", default="")
     sp.add_argument("--why", default="")
+    sp.add_argument("--season", default="", help='明玥系列名，如「柯洁九段名局欣赏」')
     sp.add_argument("--game", help='"YYYY-MM-DD|对手"')
     sp.add_argument("--tour")
     sp.add_argument("--net", action="store_true", help="进「野狐网棋」分组")
