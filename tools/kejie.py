@@ -1042,6 +1042,131 @@ README_PATH = os.path.join(ROOT, "README.md")
 HANDOFF_PATH = os.path.join(ROOT, "HANDOFF.md")
 
 
+def sgf_mainline(txt):
+    """取主变化：跳过 [] 内的字符（GN 里可能含括号），遇到第一个配对的 ) 结束。"""
+    depth, i, out = 0, 0, []
+    while i < len(txt):
+        ch = txt[i]
+        if ch == '[':
+            j = txt.find(']', i)
+            j = len(txt) - 1 if j < 0 else j
+            out.append(txt[i:j + 1])
+            i = j + 1
+            continue
+        out.append(ch)
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if depth == 0:
+                break
+        i += 1
+    return ''.join(out)
+
+
+def cmd_selfcheck(a):
+    """全站自查：对局 ↔ 棋谱 ↔ 视频 的交叉一致性。validate 查结构，这里查内容。"""
+    doc = Doc(a.html)
+    D = doc.D
+    _, db = _sgf_db(doc)
+    errs, warns = [], []
+
+    games = [(t, g) for t in doc.tours for g in t.get("games", [])]
+    gl = D.get("gl", {})
+
+    # 1. gl ↔ 对局 ↔ 棋谱库
+    keys = {"%s|%s" % (g["date"], g["opp"]) for _, g in games}
+    for k in gl:
+        if k not in keys:
+            errs.append("gl 指向不存在的对局：%s" % k)
+        elif str(gl[k]) not in db:
+            errs.append("gl[%s] 的 id %s 不在棋谱库里" % (k, gl[k]))
+
+    no_sgf = [(t, g) for t, g in games if "%s|%s" % (g["date"], g["opp"]) not in gl]
+    for t, g in no_sgf:
+        if g.get("moves", 0) > 0:
+            warns.append("有手数但没挂谱（「谱」按钮会缺）：%s %s 对%s（%d 手）"
+                         % (t["name"], g["date"], g["opp"], g["moves"]))
+
+    # 2. 逐局比对棋谱
+    for t, g in games:
+        sid = gl.get("%s|%s" % (g["date"], g["opp"]))
+        if not sid or str(sid) not in db:
+            continue
+        main = sgf_mainline(db[str(sid)])
+        mv = re.findall(r";([BW])\[([a-z]{0,2})\]", main)
+        if not mv:
+            errs.append("棋谱解析不出着法：%s %s 对%s (id=%s)" % (t["name"], g["date"], g["opp"], sid))
+            continue
+        if g.get("moves", 0) and len(mv) != g["moves"]:
+            warns.append("手数不符：%s %s 对%s 记录 %d 手 / 棋谱 %d 手"
+                         % (t["name"], g["date"], g["opp"], g["moves"], len(mv)))
+        m = re.search(r"RE\[([^\]]*)\]", main)
+        if m and not g.get("void"):
+            re_txt = m.group(1).strip()
+            if re_txt[:1] in ("B", "W"):
+                winner = re_txt[:1]
+            elif re_txt.startswith("黑"):
+                winner = "B"
+            elif re_txt.startswith("白"):
+                winner = "W"
+            else:
+                winner = None
+            want = g.get("color") if g.get("win") else ("W" if g.get("color") == "B" else "B")
+            if winner and winner != want:
+                warns.append("棋谱 RE 与记录胜负相反：%s %s 对%s 记录「%s」执%s / RE[%s]"
+                             % (t["name"], g["date"], g["opp"], g.get("result"),
+                                g.get("color"), re_txt))
+        km = re.search(r"KM\[([0-9.]+)\]", main)
+        if km and float(km.group(1)) >= 100:
+            warns.append("贴目单位异常（页面已按 /100 显示）：%s %s 对%s KM[%s]"
+                         % (t["name"], g["date"], g["opp"], km.group(1)))
+
+    # 3. 视频
+    for grp in doc.groups:
+        seen = {}
+        for it in grp.get("items", []):
+            bv = it.get("bvid") or ""
+            if bv and not re.fullmatch(r"BV[0-9A-Za-z]{10}", bv):
+                errs.append("bvid 格式不对：%s → %s" % (grp["name"], bv))
+            if bv and bv not in it.get("url", ""):
+                errs.append("url 与 bvid 不一致：%s → %s" % (grp["name"], it.get("title", "")[:30]))
+            if not it.get("date"):
+                warns.append("视频缺日期：%s → %s" % (grp["name"], it.get("title", "")[:30]))
+            if bv:
+                seen[bv] = seen.get(bv, 0) + 1
+        for bv, n in seen.items():
+            if n > 1:
+                errs.append("同一分组里重复视频：%s → %s ×%d" % (grp["name"], bv, n))
+
+    # 4. 倒计时
+    today = today_str()
+    for c in D.get("countdowns", []):
+        if c.get("date", "") < today:
+            warns.append("倒计时已过期（页面会自动隐藏）：%s %s" % (c.get("name"), c.get("date")))
+
+    # 5. 页面引用的 id 是否都在
+    ids = set(re.findall(r'id="([^"]+)"', doc.text))
+    refs = set(re.findall(r"\$\('([^']+)'\)", doc.text))
+    for miss in sorted(refs - ids):
+        errs.append("JS 引用了不存在的 id：%s" % miss)
+
+    f = site_facts(doc)
+    print("自查：%d 赛事 / %d 局 / %d 棋谱 / %d 视频（%d 组）"
+          % (f["tours"], f["games"], len(db), f["videos"], f["groups"]))
+    print("  无谱对局 %d 局（其中 %d 局记了手数）"
+          % (len(no_sgf), len([1 for t, g in no_sgf if g.get("moves", 0) > 0])))
+    for e in errs:
+        print("✗ " + e)
+    if warns:
+        print("\n! 提醒 %d 条：" % len(warns))
+        for w in warns:
+            print("  - " + w)
+    if not errs and not warns:
+        print("\n✓ 自查通过，没有发现问题")
+    sys.exit(1 if errs else 0)
+
+
 def site_facts(doc):
     """页面顶部 / 文档里用到的派生数字。"""
     T = doc.tours
@@ -1090,7 +1215,10 @@ def _patch_doc(path, pairs, dry=False):
         if k == 0:
             warn("%s：没匹配到 %s，跳过（格式被改过？）" % (name, pat))
         else:
-            txt, n = new, n + k
+            # 只算「真的变了」的条数：命中但替换结果一样（如数字没动）不计
+            if new != txt:
+                n += 1
+            txt = new
     if txt == orig:
         print("  %s：已是当前值" % name)
         return 0
@@ -1119,7 +1247,6 @@ def sync_docs(doc, dry=False):
         (r"现 \d+ 局", "现 %d 局" % f["games"]),
     ]
     handoff = [
-        (r"最后更新：\d{4}-\d{2}-\d{2}", "最后更新：%s" % today_str()),
         (r"当前数据：.*?SGF 库 \d+ 局。",
          "当前数据：%d 赛事 / %d 局（%d胜%d负%s） / %d 视频 / %d 组 / SGF 库 %s 局。"
          % (f["tours"], f["games"], f["wins"], f["losses"], void_short,
@@ -1130,7 +1257,13 @@ def sync_docs(doc, dry=False):
          "计分赛事 %d 项、生涯首局 %s"
          % (f["champ"], f["dom"], f["world"], f["team"], f["scored"], f["first"])),
     ]
-    return _patch_doc(README_PATH, readme, dry) + _patch_doc(HANDOFF_PATH, handoff, dry)
+    n = _patch_doc(README_PATH, readme, dry)
+    n += _patch_doc(HANDOFF_PATH, handoff, dry)
+    if n:
+        # 有实质改动才把「最后更新」推到今天；否则日期天天变、dry-run 永远报脏
+        n += _patch_doc(HANDOFF_PATH,
+                        [(r"最后更新：\d{4}-\d{2}-\d{2}", "最后更新：%s" % today_str())], dry)
+    return n
 
 
 def cmd_sync(a):
@@ -1144,6 +1277,11 @@ def cmd_sync(a):
     sort_tours(doc.tours)
     for t in doc.tours:
         sync_group_sub(doc, t)
+    # 分组按赛事结束日（sort）最近→最远；没日期的（野狐网棋 / AI 对局）殿后
+    dated = [g for g in doc.groups if g.get("sort")]
+    undated = [g for g in doc.groups if not g.get("sort")]
+    dated.sort(key=lambda g: g["sort"], reverse=True)
+    doc.groups[:] = dated + undated
     total_items = sum(len(g.get("items", [])) for g in doc.groups)
     doc.D["bili_total"] = total_items
     vs = doc.D.get("verify_summary")
@@ -1325,6 +1463,10 @@ def build_parser():
     sp.add_argument("--docs", action="store_true",
                     help="同时刷新 README / HANDOFF 里的数字（赛事数、局数、KPI、SGF 数等）")
     sp.set_defaults(func=cmd_sync)
+
+    sp = sub.add_parser("selfcheck", help="全站自查：对局 ↔ 棋谱 ↔ 视频 交叉一致性")
+    add_common(sp)
+    sp.set_defaults(func=cmd_selfcheck)
 
     return p
 

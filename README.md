@@ -103,6 +103,7 @@ python tools/kejie.py del-quote 大风大浪        # 或按引文片段
 
 # 体检
 python tools/kejie.py validate          # 加 --strict 才把「同日重复对手」算错误
+python tools/kejie.py selfcheck         # 对局 ↔ 棋谱 ↔ 视频 交叉自查（手数、RE、贴目、bvid 等）
 python tools/kejie.py sync              # 重算战绩、排序、对齐计数
 python tools/kejie.py sync --docs       # 同上，并把 README / HANDOFF 里的数字一起刷新
 ```
