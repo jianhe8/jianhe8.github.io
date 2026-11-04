@@ -1042,6 +1042,23 @@ README_PATH = os.path.join(ROOT, "README.md")
 HANDOFF_PATH = os.path.join(ROOT, "HANDOFF.md")
 
 
+# 贴目规则：与 index.html 里的 komiOf() 保持一致
+KOMI_UNSURE_RE = re.compile(r"中日|中韩|对抗赛|交流赛|智英会|华山智巅")
+KOMI_65_RE = re.compile(r"LG|三星|农心|棋仙|最高棋士|国手山脉|KBS|富士通|丰田|亚洲电视")
+KOMI_8_RE = re.compile(r"应氏")
+
+
+def komi_rule(name):
+    """按赛事返回应贴目数；规则不固定的对抗赛返回 None（页面同样不显示）。"""
+    if KOMI_UNSURE_RE.search(name):
+        return None
+    if KOMI_8_RE.search(name):
+        return 8.0
+    if KOMI_65_RE.search(name):
+        return 6.5
+    return 7.5
+
+
 def sgf_mainline(txt):
     """取主变化：跳过 [] 内的字符（GN 里可能含括号），遇到第一个配对的 ) 结束。"""
     depth, i, out = 0, 0, []
@@ -1088,7 +1105,8 @@ def cmd_selfcheck(a):
             warns.append("有手数但没挂谱（「谱」按钮会缺）：%s %s 对%s（%d 手）"
                          % (t["name"], g["date"], g["opp"], g["moves"]))
 
-    # 2. 逐局比对棋谱
+    # 2. 逐局比对棋谱（KM 只做统计：棋谱里的 KM 是导出时填的，不可信）
+    km_bad = {}
     for t, g in games:
         sid = gl.get("%s|%s" % (g["date"], g["opp"]))
         if not sid or str(sid) not in db:
@@ -1118,9 +1136,19 @@ def cmd_selfcheck(a):
                              % (t["name"], g["date"], g["opp"], g.get("result"),
                                 g.get("color"), re_txt))
         km = re.search(r"KM\[([0-9.]+)\]", main)
-        if km and float(km.group(1)) >= 100:
-            warns.append("贴目单位异常（页面已按 /100 显示）：%s %s 对%s KM[%s]"
-                         % (t["name"], g["date"], g["opp"], km.group(1)))
+        if km:
+            want_km = komi_rule(t["name"])
+            got = float(km.group(1))
+            if got >= 100:                      # 野狐/腾讯导出的 1/100 单位
+                got /= 100
+            if want_km is not None and abs(got - want_km) > 1e-6:
+                km_bad[t["name"]] = km_bad.get(t["name"], 0) + 1
+
+    if km_bad:
+        top = sorted(km_bad.items(), key=lambda x: -x[1])[:5]
+        warns.append("棋谱 KM 与赛事规则不符 %d 局（页面已改为按赛事规则显示，此条仅作数据质量提示）：%s"
+                     % (sum(km_bad.values()),
+                        "、".join("%s %d 局" % (n[:18], c) for n, c in top)))
 
     # 3. 视频
     for grp in doc.groups:
