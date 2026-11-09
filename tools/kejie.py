@@ -657,8 +657,37 @@ def cmd_add_video(a):
         item["why"] = a.why or "讲解"
         found.setdefault("bili", []).append(item)
         ok("已挂到对局 %s 对 %s（%s）" % (dstr, opp, t0["name"]))
+        # 顺手同步进视频分组：视频页只读 bili_groups，光挂在对局上那边看不到，
+        # 以前要再跑一次 --tour 才补齐，容易忘。--net 时进网棋组，--group 时进指定组。
+        if a.net:
+            g = find_group(doc.D, "网棋", required=False)
+            if g is None:
+                g = {"kind": "kind", "name": "野狐网棋 · 网络对局",
+                     "sub": "线上对局：野狐人气争霸赛、潜伏激斗传、中日棋圣大战等（网络对局）",
+                     "tier": "", "sort": "", "items": []}
+                doc.groups.append(g)
+                print("  新建「野狐网棋 · 网络对局」分组")
+        elif a.group:
+            g = find_group(doc.D, a.group)
+        else:
+            g = None
+            for x in doc.groups:
+                if x.get("kind") == "tour" and x.get("name") == t0["name"]:
+                    g = x
+            if g is None:
+                g = {"kind": "tour", "name": t0["name"], "sub": tour_sub(t0),
+                     "tier": t0.get("tier", ""), "sort": t0.get("end", ""), "items": []}
+                doc.groups.append(g)
+                print("  为赛事新建视频分组")
+        if g is not None:
+            gi = dict(item)                 # 复制一份，别和局上的对象共享
+            gi["tour"] = t0["name"]
+            g.setdefault("items", []).append(gi)
+            g["items"].sort(key=lambda x: x.get("date", ""))
+            ok("已同步进分组「%s」（现 %d 个）" % (g["name"], len(g["items"])))
         recount(doc.D)
         doc.save(dry=a.dry_run, backup=False, note="add-video")
+        return
         return
 
     # 目标二：某赛事的分组
