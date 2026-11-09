@@ -154,6 +154,13 @@ nav.tabs .wrap button.on{color:var(--ink);font-weight:600}
 nav.tabs .wrap button.on::after{transform:scaleX(1)}
 
 /* ---------- 配色面板 ---------- */
+/* GitHub 外链图标：跟配色按钮同一条右侧工具栏，hover 才亮起来，不抢视线 */
+.gh-btn{flex:none;align-self:center;margin:0 0 0 6px;width:32px;height:32px;display:inline-flex;
+  align-items:center;justify-content:center;border:1px solid var(--line);background:#fff;
+  color:var(--ink3);text-decoration:none;transition:color .15s,border-color .15s,background .15s}
+.gh-btn svg{width:16px;height:16px;display:block;fill:currentColor}
+.gh-btn:hover{color:var(--ink);border-color:var(--goldline2);background:var(--goldbg)}
+.gh-btn:active{background:var(--goldbg2, #f6ecd6)}
 .theme-btn{flex:none;align-self:center;margin:0 10px 0 6px;padding:5px 10px;display:inline-flex;
   align-items:center;gap:7px;border:1px solid var(--line);background:#fff;color:var(--ink2);
   font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
@@ -552,6 +559,45 @@ a.vrow2:hover{background:#fdfbf6;color:var(--blue);text-decoration:none}
 
 footer{color:var(--ink3);font-size:12px;padding:30px 0 50px;border-top:1px solid var(--line);margin-top:20px;line-height:1.9}
 footer b{color:var(--ink2);font-weight:600}
+
+/* ---------- 最近更新（铃铛 + 下拉，取自 GitHub 提交） ---------- */
+.bell-btn{position:relative;flex:none;align-self:center;margin:0 0 0 6px;width:32px;height:32px;
+  display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);
+  background:#fff;color:var(--ink3);cursor:pointer;padding:0;
+  transition:color .15s,border-color .15s,background .15s}
+.bell-btn svg{width:16px;height:16px;display:block;fill:currentColor}
+.bell-btn:hover,.bell-btn[aria-expanded="true"]{color:var(--ink);border-color:var(--goldline2);background:var(--goldbg)}
+.bell-btn .bdot{position:absolute;top:5px;right:5px;width:5px;height:5px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 0 2px #fff}
+.bell-btn .bdot[hidden]{display:none}
+.upd-pop{position:absolute;right:10px;top:calc(100% + 1px);z-index:40;width:400px;
+  max-width:calc(100vw - 20px);background:var(--card);border:1px solid var(--line);
+  padding:13px 16px 11px;display:none;box-shadow:0 14px 30px rgba(24,22,18,.10)}
+.upd-pop.on{display:block}
+.upd-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  font-size:11px;letter-spacing:.14em;color:var(--ink3);margin:0 0 8px;line-height:1.4}
+.upd-all{color:var(--ink3);text-decoration:none;font-size:11px;letter-spacing:0;
+  border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
+.upd-all:hover{color:var(--gold);border-bottom-color:var(--goldline2)}
+.upd-list{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.upd-list a{display:grid;grid-template-columns:76px 1fr auto;gap:11px;align-items:baseline;
+  padding:5px 9px;margin:0 -9px;text-decoration:none;color:var(--ink2);
+  border-left:2px solid transparent;transition:background .15s,color .15s,border-color .15s}
+.upd-list a:hover{background:var(--goldbg);color:var(--ink);border-left-color:var(--gold)}
+.upd-d{font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.upd-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:12.5px}
+.upd-s{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;
+  color:var(--ink3);opacity:.6;letter-spacing:.02em}
+.upd-list a:hover .upd-d,.upd-list a:hover .upd-s{color:var(--ink2);opacity:1}
+.upd-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
+  font-size:10.5px;color:var(--ink3);opacity:.85;line-height:1.5}
+@media(max-width:640px){
+  .upd-pop{right:8px;left:8px;width:auto;max-width:none;padding:12px 13px 10px}
+  .upd-list a{grid-template-columns:1fr auto;gap:2px 10px;padding:7px 9px}
+  .upd-d{grid-column:1;grid-row:1}
+  .upd-s{grid-column:2;grid-row:1;text-align:right}
+  .upd-t{grid-column:1/-1;grid-row:2;white-space:normal;line-height:1.55}
+}
 #lightbox{position:fixed;inset:0;background:rgba(18,17,15,.9);display:none;align-items:center;
   justify-content:center;z-index:99;padding:26px}
 #lightbox.on{display:flex}
@@ -770,6 +816,13 @@ a.pblk:hover{border-color:var(--goldline2);color:var(--blue);text-decoration:non
   <button data-tab="video">棋谱 · 讲解</button>
   <button data-tab="opp">对手志</button>
   <button data-tab="rule">规则与校准</button>
+</div>
+<a class="gh-btn" href="https://github.com/jianhe8/jianhe8.github.io" target="_blank" rel="noopener noreferrer" title="GitHub · jianhe8/jianhe8.github.io" aria-label="在 GitHub 上查看本仓库源码"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a>
+<button class="bell-btn" id="updBtn" type="button" aria-expanded="false" aria-label="最近更新" title="最近更新"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm6-5V7a6 6 0 0 0-5-5.91V0H7v1.09A6 6 0 0 0 2 7v4l-2 2v1h16v-1l-2-2z"/></svg><i class="bdot" id="updDot" hidden></i></button>
+<div class="upd-pop" id="updPop">
+  <div class="upd-h"><span>最近更新</span><a class="upd-all" href="https://github.com/jianhe8/jianhe8.github.io/commits/main" target="_blank" rel="noopener noreferrer">全部提交 →</a></div>
+  <ol class="upd-list" id="updList"></ol>
+  <div class="upd-foot">取自 GitHub 提交记录，打开页面时自动取最新 8 条</div>
 </div>
 <button class="theme-btn" id="themeBtn" type="button" aria-expanded="false"><i class="sw"></i><span>配色</span></button>
 <div class="theme-pop" id="themePop">
@@ -2675,6 +2728,75 @@ document.addEventListener('click', e => {
   if(rst) rst.onclick = function(){ st = {a:'#96731f', p:0}; apply(); save(); };
 
   apply();
+})();
+</script>
+
+<!-- 最近更新：内置一份快照（file:// 打开也能看），联网时用 GitHub API 覆盖为最新 -->
+<script>
+(function(){
+  const REPO = 'jianhe8/jianhe8.github.io';
+  const SNAP = [
+    ['2026-11-09','fix: 修正冠军口径与曲线交互，新增冠军/交手记录弹层','c3c011b'],
+    ['2026-11-04','增加了曲线放大 功能','e32f508'],
+    ['2026-11-04','修复了贴目，增加了曲线的显示','78d5152'],
+    ['2026-11-04','修复了一些 bug','5fb4919'],
+    ['2026-11-04','修复了一些 bug','9488d9f'],
+    ['2026-11-03','添加了明玥的棋仙战讲解链接','7917618'],
+    ['2026-11-02','修复了积分曲线的 bug','0004c84'],
+    ['2026-11-02','跟随数据自动更新战绩栏','0f6e6df']
+  ];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  // 去掉 fix:/feat: 之类前缀，只留一句话
+  const clean = m => String(m || '').split('\n')[0].replace(/^\s*(fix|feat|chore|docs|style|refactor|perf|test|build|ci)(\([^)]*\))?!?:\s*/i, '').trim();
+  const list = document.getElementById('updList');
+  const pop  = document.getElementById('updPop');
+  const btn  = document.getElementById('updBtn');
+  const dot  = document.getElementById('updDot');
+  const SEEN = 'kj_upd_seen';
+  let latest = '';
+
+  function seenSha(){ try{ return localStorage.getItem(SEEN) || ''; }catch(e){ return ''; } }
+  function markSeen(){ try{ if(latest) localStorage.setItem(SEEN, latest); }catch(e){} if(dot) dot.hidden = true; }
+
+  function draw(rows){
+    if (!list || !rows.length) return;
+    list.innerHTML = rows.map(r =>
+      '<li><a href="https://github.com/' + REPO + '/commit/' + esc(r[2]) + '" target="_blank" rel="noopener noreferrer">' +
+      '<span class="upd-d">' + esc(r[0]) + '</span>' +
+      '<span class="upd-t">' + esc(r[1]) + '</span>' +
+      '<span class="upd-s">' + esc(r[2]) + '</span></a></li>'
+    ).join('');
+    latest = rows[0][2];
+    if (dot) dot.hidden = (latest === seenSha());
+  }
+
+  draw(SNAP);
+
+  // 开合
+  if (btn && pop){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var on = pop.classList.toggle('on');
+      btn.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (on) markSeen();
+    });
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
+    document.addEventListener('click', function(){
+      pop.classList.remove('on'); btn.setAttribute('aria-expanded','false');
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape'){ pop.classList.remove('on'); btn.setAttribute('aria-expanded','false'); }
+    });
+  }
+
+  fetch('https://api.github.com/repos/' + REPO + '/commits?per_page=8', {headers:{'Accept':'application/vnd.github+json'}})
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      if (!Array.isArray(d) || !d.length) return;
+      const rows = d.map(c => [String(c.commit.author.date).slice(0, 10), clean(c.commit.message), String(c.sha).slice(0, 7)]);
+      if (rows.length) draw(rows);
+    })
+    .catch(() => {});   // 离线 / 限流时保持快照
 })();
 </script>
 </body>
